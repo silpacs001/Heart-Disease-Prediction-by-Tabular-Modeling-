@@ -1,0 +1,311 @@
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.callbacks import ModelCheckpoint
+from sklearn.model_selection import train_test_split
+import shap
+
+# Load the Cleveland Heart Disease dataset
+df = pd.read_csv('heart.csv')
+
+# Separate features and target variable
+y = df['target']
+X = df.drop('target', axis=1)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Build the model
+model = Sequential()
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(64, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(32, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(64, input_dim=X_train.shape[1], activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(32, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(1, activation='sigmoid'))
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+checkpoint = ModelCheckpoint('best_model.h5', monitor='val_accuracy', mode='max', save_best_only=True, verbose=1)
+
+# Train the model without early stopping
+model.fit(X_train, y_train, epochs=2000, batch_size=64, validation_split=0.1, callbacks=[checkpoint], verbose=1)
+
+best_model = tf.keras.models.load_model('best_model.h5')
+
+probabilities = best_model.predict(X_test)
+
+threshold = 0.5
+
+binary_predictions = np.where(probabilities > threshold, 1, 0)
+
+print("Classification Report:")
+print(classification_report(y_test, binary_predictions))
+
+# Evaluate the model on the test set
+accuracy = model.evaluate(X_test, y_test, verbose=0)[1]
+print(f'Accuracy on the test set: {accuracy * 100:.2f}%')
+
+# Define a function for SHAP to use for prediction
+def model_predict(x):
+    return model.predict(x)
+
+# Use SHAP for visualization
+explainer = shap.Explainer(model_predict, X_train)
+shap_values = explainer.shap_values(X_test)
+
+# Plot summary plot
+shap.summary_plot(shap_values, X_test, feature_names=X.columns)
+
+
+
+
+
+
+#2. to add visualizations:
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib import rc
+from pylab import rcParams
+from sklearn.metrics import classification_report,confusion_matrix
+from sklearn.model_selection import train_test_split
+
+from keras.models import Sequential
+from keras.layers import Dense, ReLU, Dropout
+
+
+myData = pd.read_csv('heart.csv')
+
+myData.head()
+
+myData.describe()
+
+f = sns.countplot(x='target', data=myData, palette = "Set2")
+f.set_title("Target class distribution")
+f.set_xticklabels(['Heart disease absent', 'Heart disease present'])
+plt.xlabel("");
+
+
+import seaborn as sns
+
+%matplotlib inline
+#sns.set(rc={'figure.figsize': [8, 8]}, font_scale=1.2)
+# Set the style and color palette
+sns.set(style='dark')
+#sns.set_palette("husl")
+
+sns.displot(data = myData, x = "age", kde = True, log_scale =False,color='green' )#,color='purple'
+
+import seaborn as sns
+import pandas as pd
+
+# Assuming 'myData' is your DataFrame containing the Cleveland Heart Disease dataset
+
+# Separate individuals with heart disease and without heart disease
+heart_disease = myData[myData['target'] == 1]  # Assuming 'target' column indicates presence of heart disease
+no_heart_disease = myData[myData['target'] == 0]
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Set the style
+sns.set(style='dark')
+
+# Create subplots
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Plot distribution of ages for individuals with heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='age', kde=True, log_scale=False, ax=axes[0])
+axes[0].set_title('Distribution of Ages for Individuals with Heart Disease')
+
+# Plot distribution of ages for individuals without heart disease
+sns.histplot(data=myData[myData['target'] == 0], x='age', kde=True, log_scale=False, ax=axes[1])
+axes[1].set_title('Distribution of Ages for Individuals without Heart Disease')
+
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Set the style
+sns.set(style='dark')
+
+# Create subplots
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Plot distribution of ages for individuals with heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='age', kde=True, log_scale=False, ax=axes[0], color = 'green')
+axes[0].set_title('Distribution of Ages for Individuals with Heart Disease')
+
+# Plot distribution of ages for individuals without heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='sex', kde=True, log_scale=False, ax=axes[1],color = 'green')
+axes[1].set_title('Distribution of Gender for Individuals with Heart Disease')
+
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Set the style
+sns.set(style='dark')
+
+# Create subplots
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Plot distribution of ages for individuals with heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='cp', kde=True, log_scale=False, ax=axes[0], color = 'green')
+axes[0].set_title('Distribution of Chest Pain Type for Individuals with Heart Disease')
+
+# Plot distribution of ages for individuals without heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='trestbps', kde=True, log_scale=False, ax=axes[1],color = 'green')
+axes[1].set_title('Distribution of Resting Blood Pressure for Individuals with Heart Disease')
+
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Set the style
+sns.set(style='dark')
+
+# Create subplots
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Plot distribution of ages for individuals with heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='chol', kde=True, log_scale=False, ax=axes[0], color = 'green')
+axes[0].set_title('Distribution of Serum Cholesterol for Individuals with Heart Disease')
+
+# Plot distribution of ages for individuals without heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='fbs', kde=True, log_scale=False, ax=axes[1],color = 'green')
+axes[1].set_title('Distribution of Fasting Blood Sugar for Individuals with Heart Disease')
+
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Set the style
+sns.set(style='dark')
+
+# Create subplots
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Plot distribution of ages for individuals with heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='restecg', kde=True, log_scale=False, ax=axes[0], color = 'green')
+axes[0].set_title('Distribution of Resting ECG Results for Individuals with Heart Disease')
+
+# Plot distribution of ages for individuals without heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='thalach', kde=True, log_scale=False, ax=axes[1],color = 'green')
+axes[1].set_title('Distribution of Max Heart Rate for Individuals with Heart Disease')
+
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Set the style
+sns.set(style='dark')
+
+# Create subplots
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Plot distribution of ages for individuals with heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='exang', kde=True, log_scale=False, ax=axes[0], color = 'green')
+axes[0].set_title('Distribution of Exercise-induced Angina for Heart Disease Patients')
+
+# Plot distribution of ages for individuals without heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='oldpeak', kde=True, log_scale=False, ax=axes[1],color = 'green')
+axes[1].set_title('Exercise-Induced ST Depression Distribution for Heart Disease Patients')
+
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Set the style
+sns.set(style='dark')
+
+# Create subplots
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Plot distribution of ages for individuals with heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='slope', kde=True, log_scale=False, ax=axes[0], color = 'green')
+axes[0].set_title('Peak Exercise ST Segment Distribution for Heart Disease Patients')
+
+# Plot distribution of ages for individuals without heart disease
+sns.histplot(data=myData[myData['target'] == 1], x='ca', kde=True, log_scale=False, ax=axes[1],color = 'green')
+axes[1].set_title('Vessels Colored by Fluoroscopy Distribution in Heart Disease Patients')
+
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+import seaborn as sns
+import pandas as pd
+
+# Set the style
+sns.set(style='dark')
+
+# Assuming 'myData' is your DataFrame containing the Cleveland Heart Disease dataset
+
+# Separate individuals with heart disease and without heart disease
+heart_disease = myData[myData['target'] == 1]  # Assuming 'target' column indicates presence of heart disease
+no_heart_disease = myData[myData['target'] == 0]
+
+# Plot the distribution of ages for each subset
+sns.histplot(data=heart_disease, x="thal", kde=True, log_scale=False, color = 'green') #label='Heart Disease'
+#sns.displot(data=no_heart_disease, x="age", kde=True, log_scale=False, label='No Heart Disease')
+
+# Customize the plot
+plt.title('Distribution of Thalassemia for Individuals with Heart Disease')
+plt.xlabel('Thalassemia ')
+plt.ylabel('Frequency')
+plt.legend()
+
+# Show the plot
+plt.show()
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Compute the correlation matrix
+corr = myData.corr()
+
+# Set up the matplotlib figure
+plt.figure(figsize=(10, 8))
+
+# Draw the heatmap with the mask and correct aspect ratio
+sns.heatmap(corr, cmap='coolwarm', annot=True, fmt=".2f", linewidths=0.5)
+
+# Rotate the tick labels for better readability
+plt.xticks(rotation=45)
+plt.yticks(rotation=45)
+
+# Show the plot
+plt.title('Correlation Heatmap')
+plt.show()
+
